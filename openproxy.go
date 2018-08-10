@@ -11,7 +11,7 @@ import (
 )
 
 type OpenProxy struct {
-  Host, Port, Code string
+  Host, Port, Code, Anon string
 }
 
 func (p *OpenProxy)String() string {
@@ -51,18 +51,19 @@ func GetSSLProxies(opts ...interface{}) ([]OpenProxy, error) {
 	break
       }
     }
-    if strings.Index(val, "elite") == -1 {
-      continue
-    }
     a := strings.Split(val, "</td><td")
     ip := a[0][4:]
-    port := a[1][1:]
-    code := a[2][1:]
     netip := net.ParseIP(ip)
     if netip == nil {
       continue
     }
-    proxy := OpenProxy{ Host: netip.String(), Port: port, Code: code }
+    port := a[1][1:]
+    code := a[2][1:]
+    anon := a[4][1:]
+    if anon != "elite proxy" && anon != "anonymous" {
+      continue
+    }
+    proxy := OpenProxy{ Host: netip.String(), Port: port, Code: code, Anon: anon }
     proxies = append(proxies, proxy)
   }
   return proxies, nil

@@ -6,6 +6,7 @@ import (
   "net/http"
   "strings"
   "fmt"
+  "time"
 )
 
 type OpenProxy struct {
@@ -20,10 +21,21 @@ func (p *OpenProxy)HostPort() string {
   return fmt.Sprintf("%s:%s", p.Host, p.Port)
 }
 
-func GetSSLProxies() ([]OpenProxy, error) {
+func GetSSLProxies(opts ...interface{}) ([]OpenProxy, error) {
+  cl := &http.Client{}
+  for _, opt := range opts {
+    switch v := opt.(type) {
+    case http.Client: cl = &v
+    case *http.Client: cl = v
+    case http.Transport: cl.Transport = &v
+    case *http.Transport: cl.Transport = v
+    case time.Duration: cl.Timeout = v
+    default: // unknown
+    }
+  }
   proxies := []OpenProxy{}
   url := "https://www.sslproxies.org/"
-  resp, err := http.Get(url)
+  resp, err := cl.Get(url)
   if err != nil {
     return proxies, fmt.Errorf("GET %s error %v\n", url, err)
   }

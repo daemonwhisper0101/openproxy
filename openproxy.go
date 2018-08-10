@@ -3,6 +3,7 @@ package openproxy
 
 import (
   "io/ioutil"
+  "net"
   "net/http"
   "strings"
   "fmt"
@@ -57,7 +58,11 @@ func GetSSLProxies(opts ...interface{}) ([]OpenProxy, error) {
     ip := a[0][4:]
     port := a[1][1:]
     code := a[2][1:]
-    proxy := OpenProxy{ Host: ip, Port: port, Code: code }
+    netip := net.ParseIP(ip)
+    if netip == nil {
+      continue
+    }
+    proxy := OpenProxy{ Host: netip.String(), Port: port, Code: code }
     proxies = append(proxies, proxy)
   }
   return proxies, nil

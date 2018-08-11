@@ -5,6 +5,7 @@ import (
   "io/ioutil"
   "net"
   "net/http"
+  "net/url"
   "strings"
   "fmt"
   "time"
@@ -16,6 +17,14 @@ type base struct {
 
 func (b *base)HostPort() string {
   return fmt.Sprintf("%s:%s", b.Host, b.Port)
+}
+
+func (b *base)URL() *url.URL {
+  u, err := url.Parse("http://" + b.HostPort())
+  if err != nil {
+    return nil
+  }
+  return u
 }
 
 type OpenProxy struct {

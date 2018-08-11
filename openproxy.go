@@ -10,28 +10,38 @@ import (
   "time"
 )
 
+type base struct {
+  Host, Port, Code string
+}
+
+func (b *base)HostPort() string {
+  return fmt.Sprintf("%s:%s", b.Host, b.Port)
+}
+
 type OpenProxy struct {
-  Host, Port, Code, Anon string
+  base
+  Anon string
 }
 
 func (p *OpenProxy)String() string {
-  return fmt.Sprintf("%s:%s %s", p.Host, p.Port, p.Code)
+  return fmt.Sprintf("%s %s %s", p.HostPort(), p.Code, p.Anon)
 }
 
-func (p *OpenProxy)HostPort() string {
-  return fmt.Sprintf("%s:%s", p.Host, p.Port)
+func NewOpenProxy(host, port, code, anon string) *OpenProxy {
+  return &OpenProxy{ base: base { Host: host, Port: port, Code: code }, Anon: anon }
 }
 
 type SocksProxy struct {
-  Host, Port, Code, Socks string
+  base
+  Socks string
 }
 
 func (p *SocksProxy)String() string {
-  return fmt.Sprintf("%s:%s %s %s", p.Host, p.Port, p.Code, p.Socks)
+  return fmt.Sprintf("%s %s %s", p.HostPort(), p.Code, p.Socks)
 }
 
-func (p *SocksProxy)HostPort() string {
-  return fmt.Sprintf("%s:%s", p.Host, p.Port)
+func NewSocksProxy(host, port, code, socks string) *SocksProxy {
+  return &SocksProxy{ base: base { Host: host, Port: port, Code: code }, Socks: socks }
 }
 
 func getHTML(url string, opts []interface{}) ([]byte, error) {
@@ -83,8 +93,8 @@ func GetSSLProxies(opts ...interface{}) ([]OpenProxy, error) {
     if anon != "elite proxy" && anon != "anonymous" {
       continue
     }
-    proxy := OpenProxy{ Host: netip.String(), Port: port, Code: code, Anon: anon }
-    proxies = append(proxies, proxy)
+    proxy := NewOpenProxy(netip.String(), port, code, anon)
+    proxies = append(proxies, *proxy)
   }
   return proxies, nil
 }
@@ -114,8 +124,8 @@ func GetSocksProxies(opts ...interface{}) ([]SocksProxy, error) {
     if socks != "Socks4" && socks != "Socks5" {
       continue
     }
-    proxy := SocksProxy{ Host: netip.String(), Port: port, Code: code, Socks: socks }
-    proxies = append(proxies, proxy)
+    proxy := NewSocksProxy(netip.String(), port, code, socks)
+    proxies = append(proxies, *proxy)
   }
   return proxies, nil
 }

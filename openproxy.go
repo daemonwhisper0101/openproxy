@@ -27,6 +27,10 @@ func (b *base)URL() *url.URL {
   return u
 }
 
+func (b *base)Match(p *base) bool {
+  return b.Host == p.Host
+}
+
 type OpenProxy struct {
   base
   Anon string

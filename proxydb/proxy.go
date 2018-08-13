@@ -26,6 +26,10 @@ func (p *Proxy)OpenProxy() *openproxy.OpenProxy {
   return nil
 }
 
+func (p *Proxy)IsAlive() bool {
+  return (p.live & 1) == 1
+}
+
 func (p *Proxy)Check(url string) {
   now := time.Now()
   if now.Before(p.checktime.Add(interval)) {

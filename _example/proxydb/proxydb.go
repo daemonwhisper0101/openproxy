@@ -8,14 +8,25 @@ import (
   "syscall"
   "time"
 
+  "github.com/daemonwhisper0101/openproxy"
   "github.com/daemonwhisper0101/openproxy/proxydb"
 )
+
+func filter8080(p interface{}) bool {
+  switch p := p.(type) {
+  case openproxy.OpenProxy:
+    if p.Port == "8080" {
+      return true
+    }
+  }
+  return false
+}
 
 func main() {
   signal_chan := make(chan os.Signal)
   signal.Notify(signal_chan, syscall.SIGINT, syscall.SIGTERM)
 
-  db := proxydb.New(proxydb.SSL)
+  db := proxydb.New(proxydb.SSL, proxydb.FilterFunc(filter8080))
   db.Update()
   db.Start()
 

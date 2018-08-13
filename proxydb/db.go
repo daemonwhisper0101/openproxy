@@ -21,21 +21,31 @@ type cache struct {
   index int
 }
 
+type FilterFunc func(p interface{}) bool
+
 type DB struct {
   Proxies map[string]*Proxy
   flags Flags
+  filter FilterFunc
   running bool
   signal, done chan bool
   livecache cache
 }
 
-func New(flags Flags) *DB {
+func New(flags Flags, opts ...interface{}) *DB {
   if (flags & (SSL | Socks)) == 0 {
     return nil
+  }
+  var filter FilterFunc = nil
+  for _, opt := range opts {
+    switch v := opt.(type) {
+    case FilterFunc: filter = v
+    }
   }
   return &DB{
     Proxies: map[string]*Proxy{},
     flags: flags,
+    filter: filter,
     running: false,
     signal: make(chan bool),
     done: make(chan bool),
@@ -48,6 +58,9 @@ func (db *DB)Update(opts ...interface{}) {
   if (db.flags & SSL) != 0 {
     proxies, _ := openproxy.GetSSLProxies(opts...)
     for _, p := range proxies {
+      if db.filter != nil && db.filter(p) == false {
+	continue
+      }
       key := p.HostPort()
       _, ok := db.Proxies[key]
       if !ok {
@@ -58,6 +71,9 @@ func (db *DB)Update(opts ...interface{}) {
   if (db.flags & Socks) != 0 {
     proxies, _ := openproxy.GetSocksProxies(opts...)
     for _, p := range proxies {
+      if db.filter != nil && db.filter(p) == false {
+	continue
+      }
       key := p.HostPort()
       _, ok := db.Proxies[key]
       if !ok {

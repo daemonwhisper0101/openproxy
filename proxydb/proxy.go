@@ -53,7 +53,7 @@ func (p *Proxy)Bad() {
 }
 
 func checkOpenProxy(p openproxy.OpenProxy, url string) uint64 {
-  tr := &http.Transport{ Proxy: http.ProxyURL(p.URL()) }
+  tr := &http.Transport{ Proxy: http.ProxyURL(p.URL()), DisableKeepAlives: true }
   cl := &http.Client{ Transport: tr, Timeout: time.Second * 10 }
   resp, err := cl.Get(url)
   if err != nil {

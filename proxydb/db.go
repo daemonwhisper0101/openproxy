@@ -88,6 +88,7 @@ func (db *DB)Start() {
 	    return
 	  }
 	  p.Check("https://www.google.com")
+	  time.Sleep(time.Second) // interval
 	}
       }()
     }

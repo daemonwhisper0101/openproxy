@@ -25,6 +25,7 @@ type FilterFunc func(p interface{}) bool
 
 type DB struct {
   Proxies map[string]*Proxy
+  inactive map[string]*Proxy
   flags Flags
   filter FilterFunc
   running bool
@@ -44,6 +45,7 @@ func New(flags Flags, opts ...interface{}) *DB {
   }
   return &DB{
     Proxies: map[string]*Proxy{},
+    inactive: map[string]*Proxy{},
     flags: flags,
     filter: filter,
     running: false,
@@ -110,12 +112,20 @@ func (db *DB)Start() {
     }
 loop:
     for {
-      for _, p := range db.Proxies {
+      inact := map[string]*Proxy{}
+      for k, p := range db.Proxies {
 	select {
 	case <-db.signal: break loop
 	default:
 	}
 	queue <- p
+	if (p.live & 0xf) == 0 {
+	  inact[k] = p
+	}
+      }
+      for k, p := range inact {
+	delete(db.Proxies, k)
+	db.inactive[k] = p
       }
       select {
       case <-db.signal: break loop

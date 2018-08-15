@@ -19,6 +19,7 @@ type cache struct {
   created time.Time
   proxies []*Proxy
   index int
+  maxsize int
 }
 
 type FilterFunc func(p interface{}) bool
@@ -51,7 +52,11 @@ func New(flags Flags, opts ...interface{}) *DB {
     running: false,
     signal: make(chan bool),
     done: make(chan bool),
-    livecache: cache{ created: time.Now(), proxies: []*Proxy{} },
+    livecache: cache{
+      created: time.Now(),
+      proxies: []*Proxy{},
+      maxsize: 128,
+    },
   }
 }
 
@@ -154,23 +159,32 @@ func (db *DB)ShowAll() {
   }
 }
 
-func (db *DB)GetProxy() *Proxy {
+func (db *DB)updateCache() {
   now := time.Now()
   inv := db.livecache.created.Add(time.Minute * 10)
   if now.After(inv) || len(db.livecache.proxies) == 0 {
     // create cache
     proxies := []*Proxy{}
+    n := 0
     for _, p := range db.Proxies {
       if (p.live & 1) == 0 {
 	continue
       }
       pp := p // dereference
       proxies = append(proxies, pp)
+      n++
+      if n > db.livecache.maxsize {
+	break
+      }
     }
     db.livecache.created = now
     db.livecache.proxies = proxies
     db.livecache.index = 0
   }
+}
+
+func (db *DB)GetProxy() *Proxy {
+  db.updateCache()
   for db.livecache.index < len(db.livecache.proxies) {
     p := db.livecache.proxies[db.livecache.index]
     db.livecache.index++

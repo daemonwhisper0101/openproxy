@@ -2,6 +2,7 @@
 package proxydb
 
 import (
+  "net"
   "net/http"
   "time"
 
@@ -53,7 +54,12 @@ func (p *Proxy)Bad() {
 }
 
 func checkOpenProxy(p openproxy.OpenProxy, url string) uint64 {
-  tr := &http.Transport{ Proxy: http.ProxyURL(p.URL()), DisableKeepAlives: true }
+  d := &net.Dialer{ Timeout: time.Second * 10, KeepAlive: time.Second }
+  tr := &http.Transport{
+    Proxy: http.ProxyURL(p.URL()),
+    DialContext: d.DialContext,
+    DisableKeepAlives: true,
+  }
   cl := &http.Client{ Transport: tr, Timeout: time.Second * 10 }
   resp, err := cl.Get(url)
   if err != nil {

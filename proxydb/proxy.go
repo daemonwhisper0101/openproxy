@@ -58,7 +58,9 @@ func checkOpenProxy(p openproxy.OpenProxy, url string) uint64 {
   tr := &http.Transport{
     Proxy: http.ProxyURL(p.URL()),
     DialContext: d.DialContext,
+    TLSHandshakeTimeout: time.Second * 5,
     DisableKeepAlives: true,
+    IdleConnTimeout: time.Second,
   }
   cl := &http.Client{ Transport: tr, Timeout: time.Second * 10 }
   resp, err := cl.Get(url)

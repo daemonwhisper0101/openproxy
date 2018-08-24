@@ -17,7 +17,9 @@ func checkOpenProxy(p openproxy.OpenProxy, url string) uint64 {
     TLSHandshakeTimeout: time.Second * 5,
     DisableKeepAlives: true,
     IdleConnTimeout: time.Second,
+    MaxIdleConns: 1,
   }
+  defer tr.CloseIdleConnections()
   cl := &http.Client{ Transport: tr, Timeout: time.Second * 10 }
   resp, err := cl.Get(url)
   if err != nil {

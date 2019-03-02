@@ -32,6 +32,7 @@ type DB struct {
   running bool
   signal, done chan bool
   livecache cache
+  threads int
 }
 
 func New(flags Flags, opts ...interface{}) *DB {
@@ -57,6 +58,7 @@ func New(flags Flags, opts ...interface{}) *DB {
       proxies: []*Proxy{},
       maxsize: 128,
     },
+    threads: 4,
   }
 }
 
@@ -99,9 +101,9 @@ func (db *DB)Start() {
   go func() {
     // 16 workers
     var wg sync.WaitGroup
-    queue := make(chan *Proxy, 16)
+    queue := make(chan *Proxy, db.threads)
     stop := false
-    for i := 0; i < 16; i++ {
+    for i := 0; i < db.threads; i++ {
       wg.Add(1)
       go func() {
 	defer wg.Done()
